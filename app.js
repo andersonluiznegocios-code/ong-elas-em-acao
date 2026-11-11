@@ -235,7 +235,7 @@ async function refreshUnread() {
 
 function shell(active) {
   const nav = [['inicio', '🏠', 'Início'], ['camisetas', '👕', 'Camisetas'], ['acoes', '🩷', 'Ações'], ['meus', '🎁', 'Minhas'], ['perfil', '👤', 'Perfil']];
-  app().innerHTML = `<div class="top"><div class="brand">${h(S.config?.nome_grupo || 'Ações Sociais')}</div>
+  app().innerHTML = `<div class="top"><div class="brand"><img src="logo.png" alt="" class="brand-logo"><span>${h(S.config?.nome_grupo || 'Ações Sociais')}</span></div>
     ${isStaff() ? `<a class="icon-btn" href="#/admin" title="Painel administrativo">⚙️</a>` : ''}
     <a class="icon-btn" id="bell" href="#/notificacoes">🔔</a></div>
     <div class="wrap" id="main"></div>
@@ -273,7 +273,7 @@ A.reload = () => router();
 window.router = router;
 
 function viewMensagem(titulo, texto, comSair) {
-  app().innerHTML = `<div class="auth"><div class="box center"><div class="logo">🩷</div><h2>${h(titulo)}</h2>
+  app().innerHTML = `<div class="auth"><div class="box center"><img src="logo.png" alt="" class="logo-img"><h2>${h(titulo)}</h2>
   <p class="muted">${h(texto)}</p>${comSair ? '<button class="btn sec" onclick="A.sair()">Sair</button>' : ''}</div></div>`;
 }
 
@@ -313,7 +313,7 @@ function viewAuth(modo) {
       <div class="sp"></div><button class="btn block">Enviar link</button></form>
       <div class="sp"></div><p class="center"><a href="#/login">Voltar ao login</a></p>`;
   }
-  app().innerHTML = `<div class="auth"><div class="box"><div class="logo">🩷</div><h1 class="center">${g}</h1>
+  app().innerHTML = `<div class="auth"><div class="box"><img src="logo.png" alt="${g}" class="logo-img">
     <p class="center muted">${sub}</p><div class="card" id="authcard">${form}</div>
     <p class="center small"><a href="#/publico/transparencia">Conheça os resultados das nossas ações</a></p></div></div>`;
 }
@@ -683,7 +683,7 @@ A.salvarDoacao = act(async (e, id) => {
 
 /* ------------------------------ PÚBLICO (sem login) ------------------------------ */
 async function viewPublico(tipo, id) {
-  app().innerHTML = `<div class="top"><div class="brand">${h(S.config?.nome_grupo || 'Ações Sociais')}</div>
+  app().innerHTML = `<div class="top"><div class="brand"><img src="logo.png" alt="" class="brand-logo"><span>${h(S.config?.nome_grupo || 'Ações Sociais')}</span></div>
     <a class="btn sm" href="#/${S.session ? 'inicio' : 'login'}">${S.session ? 'Abrir app' : 'Entrar'}</a></div>
     <div class="wrap" id="main">${loadingHTML}</div>`;
   try {
