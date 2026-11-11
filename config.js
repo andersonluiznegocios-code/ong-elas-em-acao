@@ -1,8 +1,8 @@
 // =====================================================
-//  CONFIGURAÇÃO — preencha com os dados do seu Supabase
-//  Supabase > Project Settings > API
+//  CONFIGURAÇÃO — dados do Supabase da ONG Elas Em Ação
+//  (chave pública/publishable: pode ficar no app; a segurança é feita pelo banco)
 // =====================================================
 window.APP_CONFIG = {
-  SUPABASE_URL: 'https://SEU-PROJETO.supabase.co',
-  SUPABASE_ANON_KEY: 'COLE-AQUI-A-ANON-PUBLIC-KEY'
+  SUPABASE_URL: 'https://vrzupgneveqjevetgwts.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_gsWjh_kzP6NGB_GiqZsn8A_Jc41eM5E'
 };
