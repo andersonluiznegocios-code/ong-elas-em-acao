@@ -32,6 +32,9 @@ h1{font-size:34px} h2{font-size:28px} h3{font-size:22px}
 .top .brand{flex:1;min-width:0;display:flex;align-items:center;gap:10px;font-family:'Bebas Neue';font-size:24px;color:var(--pink);white-space:nowrap}
 .top .brand span{overflow:hidden;text-overflow:ellipsis}
 .brand-logo{width:40px;height:40px;flex:none}
+.avatar{display:inline-flex;align-items:center;justify-content:center;flex:none;border-radius:50%;object-fit:cover;background:var(--pinkbg);color:var(--pink2);font-weight:700;border:2px solid var(--pink)}
+.foto-perfil{display:flex;justify-content:center}
+.nav a span .avatar{border-width:1.5px;vertical-align:middle}
 .logo-img{display:block;width:170px;height:170px;margin:0 auto 6px}
 .icon-btn{background:var(--card);border:1px solid var(--line);color:var(--tx);width:40px;height:40px;border-radius:12px;font-size:18px;cursor:pointer;position:relative;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
 .dot{position:absolute;top:-5px;right:-5px;background:var(--pink);color:#fff;font-size:12px;min-width:19px;height:19px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 5px;font-weight:700}
@@ -136,9 +139,9 @@ th{background:var(--card2);font-weight:700;text-transform:uppercase;font-size:13
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="config.js"></script>
-<script src="app.js"></script>
-<script src="admin.js"></script>
+<script src="config.js?v=3"></script>
+<script src="app.js?v=3"></script>
+<script src="admin.js?v=3"></script>
 <script>
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>

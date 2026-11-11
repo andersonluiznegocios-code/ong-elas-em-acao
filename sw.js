@@ -1,5 +1,5 @@
 // Service worker: permite instalar o app e abrir mais rápido. Sempre busca a versão nova primeiro.
-const CACHE = 'acoes-sociais-v2';
+const CACHE = 'acoes-sociais-v3';
 const SHELL = ['./', 'index.html', 'app.js', 'admin.js', 'config.js', 'manifest.json', 'icon-192.png', 'logo.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });

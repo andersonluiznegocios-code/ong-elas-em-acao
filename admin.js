@@ -638,14 +638,16 @@
       ${isAdmin() ? '<p class="small muted">Papéis: <b>Administrador</b> acessa tudo · <b>Responsável</b> gerencia ações, apadrinhamento, presentes e camisetas · <b>Voluntário</b> usa o app.</p>' : ''}</div>
       <div id="user-list"></div>`);
     renderUsers();
+    try { await urlsFotos(st.users.map(u => u.foto_path).filter(Boolean)); renderUsers(); } catch {}
   }
   function renderUsers() {
     const b = st.fUser.toLowerCase(), bd = onlyDigits(st.fUser);
     const lista = st.users.filter(u => !b || u.nome.toLowerCase().includes(b) || (u.email || '').toLowerCase().includes(b) || (bd && onlyDigits(u.telefone).includes(bd)));
     $('#user-list').innerHTML = `<p class="small muted">${lista.length} pessoa(s)</p>` + lista.map(u => `
       <a class="item" style="display:block;text-decoration:none;color:inherit" href="#/admin/usuario/${u.id}">
-      <div class="row between"><span class="t">${h(u.nome || '(sem nome)')}</span><div class="row">${badge(ROLE, u.role)}${u.ativo ? '' : '<span class="badge b-err">Inativo</span>'}</div></div>
-      <div class="small muted">${h(u.telefone)} · ${h(u.email || '')} · desde ${dt(u.created_at)}</div></a>`).join('');
+      <div class="row" style="flex-wrap:nowrap;align-items:center">${avatarHTML(u.foto_path, u.nome, 48)}
+      <div style="flex:1;min-width:0"><div class="row between"><span class="t">${h(u.nome || '(sem nome)')}</span><div class="row">${badge(ROLE, u.role)}${u.ativo ? '' : '<span class="badge b-err">Inativo</span>'}</div></div>
+      <div class="small muted">${h(u.telefone)} · ${h(u.email || '')} · desde ${dt(u.created_at)}</div></div></div></a>`).join('');
   }
   Admin.fUser = v => { st.fUser = v; renderUsers(); };
   Admin.exportUsers = () => exportXLSX('voluntarios', {
@@ -662,8 +664,9 @@
       q(sb.from('doacoes').select('*,acoes(titulo)').eq('user_id', id)),
     ]);
     const eu = u.id === S.profile.id;
+    if (u.foto_path) { try { await urlsFotos([u.foto_path]); } catch {} }
     main(head(h(u.nome || '(sem nome)'), '#/admin/usuarios') + `
-      <div class="card"><div class="row">${badge(ROLE, u.role)}${u.ativo ? '<span class="badge b-ok">Ativo</span>' : '<span class="badge b-err">Inativo</span>'}</div>
+      <div class="card"><div class="foto-perfil">${avatarHTML(u.foto_path, u.nome, 110)}</div><div class="sp"></div><div class="row">${badge(ROLE, u.role)}${u.ativo ? '<span class="badge b-ok">Ativo</span>' : '<span class="badge b-err">Inativo</span>'}</div>
         <div class="sp"></div><div>📱 <a href="${waLink(u.telefone)}" target="_blank" rel="noopener">${h(u.telefone)}</a></div>
         <div>✉️ ${h(u.email || '')}</div><div class="small muted">Cadastro: ${dt(u.created_at)} · Aceite LGPD: ${u.aceite_lgpd_em ? dt(u.aceite_lgpd_em) : '—'}</div>
         ${isAdmin() ? `<hr><form onsubmit="Admin.salvarUser(event,'${u.id}')">
@@ -695,6 +698,7 @@
   Admin.excluirUser = act(async (e, id) => {
     if (!confirm('Excluir este usuário? O acesso é apagado e os dados pessoais são removidos/anonimizados.')) return;
     if ((prompt('Digite EXCLUIR para confirmar') || '').toUpperCase() !== 'EXCLUIR') return;
+    try { await apagarFotos(id); } catch {}
     await q(sb.rpc('admin_excluir_usuario', { p_user: id }), 'Usuário excluído.');
     st.users = []; location.hash = '#/admin/usuarios';
   });

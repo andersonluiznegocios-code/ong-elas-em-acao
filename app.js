@@ -164,6 +164,39 @@ async function comprimirImagem(file, max = 1600, qual = 0.8) {
 }
 window.comprimirImagem = comprimirImagem;
 
+/* Foto de perfil: recorte quadrado, 512px */
+async function recortarQuadrado(file, lado = 512, qual = 0.85) {
+  const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('Não foi possível ler a imagem. Use uma foto JPG ou PNG.')); i.src = URL.createObjectURL(file); });
+  const s = Math.min(img.width, img.height);
+  const c = document.createElement('canvas'); c.width = lado; c.height = lado;
+  c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, lado, lado);
+  URL.revokeObjectURL(img.src);
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', qual));
+  if (!blob) throw new Error('Não foi possível processar a foto.');
+  return new File([blob], 'foto.jpg', { type: 'image/jpeg' });
+}
+/* URLs temporárias das fotos (o armazenamento é privado) */
+const _fotoCache = {};
+async function urlsFotos(paths) {
+  const faltam = [...new Set(paths.filter(p => p && !_fotoCache[p]))];
+  if (faltam.length) {
+    const { data } = await sb.storage.from('avatares').createSignedUrls(faltam, 3600);
+    (data || []).forEach(d => { if (d.signedUrl && d.path) _fotoCache[d.path] = d.signedUrl; });
+  }
+  return _fotoCache;
+}
+function avatarHTML(path, nome, size = 44) {
+  const ini = String(nome || '?').trim().split(/\s+/).map(x => x[0] || '').slice(0, 2).join('').toUpperCase() || '?';
+  const url = path && _fotoCache[path];
+  const st = `width:${size}px;height:${size}px;font-size:${Math.round(size * 0.4)}px`;
+  return url ? `<img class="avatar" src="${h(url)}" alt="" style="${st}">` : `<span class="avatar" style="${st}">${h(ini)}</span>`;
+}
+async function apagarFotos(uid) {
+  const { data } = await sb.storage.from('avatares').list(uid, { limit: 100 });
+  if (data && data.length) await sb.storage.from('avatares').remove(data.map(f => `${uid}/${f.name}`));
+}
+Object.assign(window, { urlsFotos, avatarHTML, apagarFotos });
+
 /* ------------------------------ PIX (BR Code) ------------------------------ */
 function pixF(id, val) { const v = String(val); return id + String(v.length).padStart(2, '0') + v; }
 function crc16(str) {
@@ -239,7 +272,12 @@ function shell(active) {
     ${isStaff() ? `<a class="icon-btn" href="#/admin" title="Painel administrativo">⚙️</a>` : ''}
     <a class="icon-btn" id="bell" href="#/notificacoes">🔔</a></div>
     <div class="wrap" id="main"></div>
-    <nav class="nav">${nav.map(([r, i, t]) => `<a href="#/${r}" class="${active === r ? 'on' : ''}"><span>${i}</span>${t}</a>`).join('')}</nav>`;
+    <nav class="nav">${nav.map(([r, i, t]) => `<a href="#/${r}" class="${active === r ? 'on' : ''}"><span${r === 'perfil' ? ' id="nav-foto"' : ''}>${i}</span>${t}</a>`).join('')}</nav>`;
+  atualizarFotoNav();
+}
+async function atualizarFotoNav() {
+  const p = S.profile?.foto_path; if (!p) return;
+  try { await urlsFotos([p]); const el = $('#nav-foto'); if (el && _fotoCache[p]) el.innerHTML = avatarHTML(p, S.profile.nome, 24); } catch {}
 }
 function main(html) { const m = $('#main'); if (m) m.innerHTML = html; }
 window.main = main;
@@ -371,7 +409,7 @@ A.sair = async () => {
 };
 
 A.politica = () => modal('Política de privacidade', `
-  <p><b>Quais dados coletamos:</b> nome, telefone, e-mail, pedidos de camiseta, comprovantes de pagamento, participação em ações e apadrinhamentos.</p>
+  <p><b>Quais dados coletamos:</b> nome, telefone, e-mail, foto de perfil (opcional), pedidos de camiseta, comprovantes de pagamento, participação em ações e apadrinhamentos.</p>
   <p><b>Para que usamos:</b> exclusivamente para organizar as ações sociais, a venda das camisetas, o contato com voluntários e a entrega dos presentes.</p>
   <p><b>Quem tem acesso:</b> você vê apenas os seus dados. Somente administradores e responsáveis pelas ações acessam os dados da equipe. Comprovantes ficam em armazenamento privado.</p>
   <p><b>Crianças e pessoas vulneráveis:</b> cadastramos apenas o mínimo necessário (primeiro nome ou código, idade e tamanhos). Fotos só são publicadas com autorização dos responsáveis.</p>
@@ -757,7 +795,18 @@ async function viewTransparencia(publico) {
 /* ------------------------------ PERFIL ------------------------------ */
 async function viewPerfil() {
   const p = S.profile;
+  if (p.foto_path) { try { await urlsFotos([p.foto_path]); } catch {} }
   main(`<h1>👤 Meu perfil</h1><div class="sp"></div>
+    <div class="card center">
+      <div class="foto-perfil">${avatarHTML(p.foto_path, p.nome, 120)}</div>
+      <div class="sp"></div>
+      <input type="file" id="fotoin" accept="image/*" style="display:none" onchange="A.enviarFoto(event)">
+      <div class="row" style="justify-content:center">
+        <button class="btn sm" onclick="document.getElementById('fotoin').click()">📷 ${p.foto_path ? 'Trocar foto' : 'Colocar foto'}</button>
+        ${p.foto_path ? `<button class="btn sm ghost" onclick="A.removerFoto(event)">Remover</button>` : ''}
+      </div>
+      <p class="small muted">Sua foto aparece para você e para a equipe da ONG.</p>
+    </div>
     <div class="card"><div class="row between"><b>${h(p.email || S.session.user.email)}</b>${badge(ROLE, p.role)}</div>
     <form onsubmit="A.salvarPerfil(event)">
       <label>Nome completo</label><input name="nome" value="${h(p.nome)}" required>
@@ -780,6 +829,27 @@ A.salvarPerfil = act(async e => {
   await q(sb.from('profiles').update({ nome: f.nome, telefone: f.telefone }).eq('id', S.profile.id), 'Dados atualizados!');
   await loadProfile();
 });
+A.enviarFoto = act(async e => {
+  const f0 = e.target.files?.[0]; e.target.value = '';
+  if (!f0) return;
+  if (!f0.type.startsWith('image/')) return toast('Escolha uma foto (JPG ou PNG).', true);
+  toast('Enviando foto…');
+  const f = await recortarQuadrado(f0);
+  const uid = S.profile.id, antiga = S.profile.foto_path;
+  const path = `${uid}/foto-${Date.now()}.jpg`;
+  await q(sb.storage.from('avatares').upload(path, f, { contentType: 'image/jpeg', upsert: false }));
+  await q(sb.from('profiles').update({ foto_path: path }).eq('id', uid), 'Foto atualizada!');
+  if (antiga) await sb.storage.from('avatares').remove([antiga]);
+  await loadProfile(); viewPerfil(); atualizarFotoNav();
+});
+A.removerFoto = act(async () => {
+  if (!confirm('Remover sua foto de perfil?')) return;
+  const antiga = S.profile.foto_path;
+  await q(sb.from('profiles').update({ foto_path: null }).eq('id', S.profile.id), 'Foto removida.');
+  if (antiga) await sb.storage.from('avatares').remove([antiga]);
+  await loadProfile(); viewPerfil();
+  const el = $('#nav-foto'); if (el) el.textContent = '👤';
+});
 A.alterarSenha = act(async e => {
   const f = fd(e.target);
   if (f.senha !== f.senha2) return toast('As senhas não conferem.', true);
@@ -794,6 +864,7 @@ A.excluirConta = act(async () => {
   if (!confirm('Excluir sua conta apaga seu acesso e seus dados pessoais. Essa ação não pode ser desfeita. Continuar?')) return;
   const t = prompt('Para confirmar, digite EXCLUIR');
   if ((t || '').trim().toUpperCase() !== 'EXCLUIR') return toast('Exclusão cancelada.');
+  try { await apagarFotos(S.profile.id); } catch {}
   await q(sb.rpc('excluir_minha_conta'));
   toast('Conta excluída.');
   await sb.auth.signOut().catch(() => {});
